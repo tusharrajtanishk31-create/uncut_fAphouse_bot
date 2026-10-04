@@ -3,18 +3,16 @@ import telebot
 from flask import Flask, request
 from openai import OpenAI
 
-# Load Environment Variables
+# 1. Load Environment Variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 HF_TOKEN = os.environ.get("HF_TOKEN")
-
-# Render automatically sets RENDER_EXTERNAL_URL for web services
+# Render automatically provides this environment variable for your app's URL
 WEBHOOK_URL = os.environ.get("RENDER_EXTERNAL_URL") 
 
-# Initialize Telegram Bot and Flask App
+# 2. Initialize Telegram Bot, Flask App, and OpenAI Client
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# Initialize OpenAI client connecting to Hugging Face router
 client = OpenAI(
     base_url="https://router.huggingface.co/v1",
     api_key=HF_TOKEN
@@ -26,7 +24,7 @@ MODEL_NAME = "deepseek-ai/DeepSeek-V4.1-Flash:novita"
 def send_welcome(message):
     bot.reply_to(message, "Hello! Send me a text message or a photo, and I will answer using DeepSeek-V4.1-Flash!")
 
-# --- Handle Text Messages ---
+# --- Handle Standard Text Messages ---
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     try:
@@ -50,10 +48,10 @@ def handle_photo(message):
         
         # Get the highest resolution version of the photo
         file_info = bot.get_file(message.photo[-1].file_id)
-        # Construct the URL so OpenAI can download the image from Telegram's servers
+        # Construct the URL so OpenAI can access the image from Telegram's servers
         image_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info.file_path}"
         
-        # Use user's caption as the prompt, or default to your specified sentence
+        # Use the user's caption as the prompt, or default to your specified sentence
         prompt_text = message.caption if message.caption else "Describe this image in one sentence."
 
         response = client.chat.completions.create(
